@@ -69,8 +69,9 @@ class Block {
         // Resolve with the data if the object isn't the Genesis block
         return new Promise((resolve, reject) => {
             let currentData = self.data
-            let decodeData = JSON.parse(hex2ascii(currentData))
-            self.height !== 0 ? resolve(decodeData) : reject(Error("Genesis block"))
+            let decodeData = hex2ascii(currentData)
+            let parsedData = JSON.parse(decodeData)
+            self.height !== 0 ? resolve(parsedData) : reject(Error("Genesis block"))
         })
     }
 
