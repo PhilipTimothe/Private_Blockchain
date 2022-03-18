@@ -71,7 +71,7 @@ class Block {
             let currentData = self.body
             let decodeData = hex2ascii(currentData)
             let parsedData = JSON.parse(decodeData)
-            self.height !== 0 ? resolve(parsedData) : reject(Error("Genesis block"))
+            self.height > 0 ? resolve(parsedData) : reject(Error("Genesis block"))
         })
     }
 
