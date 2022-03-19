@@ -11,7 +11,6 @@
 const SHA256 = require('crypto-js/sha256');
 const BlockClass = require('./block.js');
 const bitcoinMessage = require('bitcoinjs-message');
-const hex2ascii = require('hex2ascii');
 
 class Blockchain {
 
@@ -121,8 +120,9 @@ class Blockchain {
             let currentTime = parseInt(new Date().getTime().toString().slice(0, -3))
             if (currentTime <(messageTime + (300000))) {
                 if (bitcoinMessage.verify(message, address, signature)) {
-                    let newBlock = new BlockClass.Block({owner: address, star: star})
-                    resolve(self._addBlock(newBlock))
+                    let newBlock = new BlockClass.Block({star: star, owner: address})
+                    await self._addBlock(newBlock)
+                    resolve(newBlock)
                 } else {
                     reject("no valid signature")
                 }
@@ -170,18 +170,18 @@ class Blockchain {
      * Remember the star should be returned decoded.
      * @param {*} address 
      */
-    getStarsByWalletAddress (address) {
+    getStarsByWalletAddress(address) {
         let self = this;
         let stars = [];
-        return new Promise((resolve) => {
-            // for (let i = 0; i < self.chain.length; i++) {
-            self.chain.forEach(block => {   
-                let star = block.getBData()
-                if (star.owner === address) {
-                    stars.push(star)
+        return new Promise(async (resolve) => {
+            for (let i = 1; i < self.chain.length; i++) {
+                let star = await self.chain[i].getBData()
+                if (star) {
+                    if (star.owner === address) {
+                        stars.push(star)
+                    }
                 }
-            }) 
-            // }
+            }
             resolve(stars)
         });
     }
