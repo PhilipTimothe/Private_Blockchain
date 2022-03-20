@@ -64,20 +64,34 @@ class Blockchain {
     _addBlock(block) {
         let self = this;
         return new Promise(async (resolve, reject) => {
-            try {
-                if (self.height > -1) {
-                    block.previousBlockHash = self.chain[self.chain.length - 1].hash
+                try {
+                    if (self.height > -1) {
+                        let chainValidate = await self.validateChain()
+                        if (chainValidate.length === 0) {
+                            block.previousBlockHash = self.chain[self.chain.length - 1].hash
+                            let newHeight = self.height + 1
+                            block.height = newHeight
+                            block.time = new Date().getTime().toString().slice(0,-3);
+                            block.hash = SHA256(JSON.stringify(block)).toString();
+                            self.chain.push(block)
+                            self.height = newHeight
+                            resolve(block)
+                        } else {
+                            reject(Error)
+                        }
+                    }
+                    if (self.height === -1) {
+                        let newHeight = self.height + 1
+                        block.height = newHeight
+                        block.time = new Date().getTime().toString().slice(0,-3);
+                        block.hash = SHA256(JSON.stringify(block)).toString();
+                        self.chain.push(block)
+                        self.height = newHeight
+                        resolve(block)
+                    }
+                } catch { 
+                    reject(Error)
                 }
-                let newHeight = self.height + 1
-                block.height = newHeight
-                block.time = new Date().getTime().toString().slice(0,-3);
-                block.hash = SHA256(JSON.stringify(block)).toString();
-                self.chain.push(block)
-                self.height = newHeight
-                resolve(block)
-            } catch { 
-                reject(Error)
-            }
         });
     }
 
@@ -118,7 +132,7 @@ class Blockchain {
         return new Promise(async (resolve, reject) => {
             let messageTime = parseInt(message.split(':')[1])
             let currentTime = parseInt(new Date().getTime().toString().slice(0, -3))
-            if (currentTime <(messageTime + (300000))) {
+            if (currentTime <(messageTime + (60000*5))) {
                 if (bitcoinMessage.verify(message, address, signature)) {
                     let newBlock = new BlockClass.Block({star: star, owner: address})
                     await self._addBlock(newBlock)
@@ -142,7 +156,7 @@ class Blockchain {
     getBlockByHash(hash) {
         let self = this;
         return new Promise((resolve, reject) => {
-           let block = self.chain.filter(block => block.hash === hash)
+           let block = self.chain.find(block => block.hash === hash)
            block ? resolve(block) : reject(Error("No block with hash!"))
         });
     }
